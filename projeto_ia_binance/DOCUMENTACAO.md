@@ -16,12 +16,16 @@ Este documento explica cada parte do seu projeto, o que cada arquivo faz e como 
 ## 🐍 Scripts Python (`/scripts`)
 
 ### 🛠️ Coleta de Dados
-- **`coletar.py`**: Baixa o histórico de **uma** moeda específica. Aceita argumentos como o nome da moeda e quantos meses baixar.
+- **`robo_spider.py`**: [SUPER-NOVO] Scraper Autônomo. Simula navegação humana para varrer notícias do Google ao longo dos anos, contornando bloqueios de IP e executando a Análise NLP automaticamente.
+- **`coletar_noticias.py`**: [NOVO] Integração de IA Básica. Baixa as últimas notícias financeiras e gera o _score_ de Sentimento (Positivo/Negativo) via API Paga.
+- **`coletar.py`**: Baixa o histórico financeiro de **uma** moeda específica. Aceita argumentos como o nome da moeda e quantos meses baixar.
 - **`coletar_em_massa.py`**: Um script automatizado que chama o `coletar.py` repetidas vezes para baixar os 24 meses das 10 maiores moedas do mercado de uma vez.
+- **`mesclar_dados.py`**: Ferramenta de **Prevenção de Data Leakage**. Une as planilhas financeiras com as noticias mantendo coerência na máquina do tempo e bloqueando a IA de adivinhar o futuro.
 
 ### 🧠 Treinamento (Aprendizado)
+- **`treinar_sentimento.py`**: [SUPER-NOVO] A evolução definitiva (Multivariada). Treina a IA injetando DUAS memórias simultâneas no cérebro: A linha do preço e a Sensação Textual extraída das notícias, para que ela "leia as manchetes" antes de adivinhar o fechamento.
 - **`treinar.py`**: Treina a IA para o **curto prazo** (prever o que acontece na próxima 1 hora). É excelente para seguir a tendência atual.
-- **`treinar_24h.py`**: O modo **PRO**. Treina a IA para prever o preço de **amanhã** (24 horas à frente). Usa uma rede neural mais profunda (3 camadas).
+- **`treinar_24h.py`**: O modo **PRO**. Treina a IA para prever o preço de **amanhã** (24 horas à frente) usando apenas os números base. Usa uma rede neural mais profunda (3 camadas).
 
 ### 📊 Simulação e Teste
 - **`simular.py`**: Roda um teste em uma moeda e abre um gráfico na tela para você ver a linha azul (real) vs vermelha (IA).
