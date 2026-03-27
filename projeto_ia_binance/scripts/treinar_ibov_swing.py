@@ -3,52 +3,67 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.preprocessing import MinMaxScaler
 import os
 
 def treinar_ibov_swing():
-    print("🇧🇷 TREINANDO ESPECIALISTA IBOV SWING (BOLSA BRASILEIRA)...")
+    print("🇧🇷 TREINANDO CÉREBRO ESPECIALISTA IBOV (MODO CONSISTÊNCIA)...")
     
-    df = pd.read_csv('dados/ibov_processado.csv')
+    caminho_dados = 'dados/ibov_processado.csv'
+    if not os.path.exists(caminho_dados):
+        print(f"❌ Erro: Arquivo {caminho_dados} não encontrado. Gere os dados primeiro.")
+        return
+
+    df = pd.read_csv(caminho_dados)
     
-    # 1. Selecionar features (Preço + Técnicos)
-    features = ['close', 'ma7', 'ma21', 'rsi', 'upper_band', 'lower_band']
+    # 1. Selecionar features
+    features = ['close', 'ema9', 'ema21', 'rsi', 'macd', 'stoch_k', 'atr']
     
     scaler = MinMaxScaler()
     df_scaled = scaler.fit_transform(df[features])
     
-    # 2. Criar Janelas (60h -> Prever 12h futuro para Swing rápido)
+    # 2. Criar Janelas
     window = 60
     X, y = [], []
     for i in range(len(df_scaled) - window - 12):
         X.append(df_scaled[i:i+window])
-        # Alvo: Preço de fechamento em t+12 (relacionado à coluna index 0)
         y.append(df_scaled[i+window+11, 0])
         
     X = np.array(X, dtype='float32')
     y = np.array(y, dtype='float32')
 
-    # 3. Modelo LSTM Multi-Dimensional
+    # 3. Modelo LSTM
     model = Sequential([
         Input(shape=(window, len(features))),
-        LSTM(128, return_sequences=True),
+        LSTM(150, return_sequences=True),
+        Dropout(0.3),
+        LSTM(80, return_sequences=True),
         Dropout(0.2),
-        LSTM(64),
-        Dropout(0.2),
+        LSTM(40),
         Dense(32, activation='relu'),
         Dense(1)
     ])
 
     model.compile(optimizer='adam', loss='mse')
 
-    print(f"🚀 Treinando com {X.shape[0]} amostras e {len(features)} indicadores...")
-    # 5 épocas para treinamento base (será refinado no backtest adaptativo)
-    model.fit(X, y, epochs=5, batch_size=32, verbose=1)
+    # --- PROTEÇÃO CONTRA DECOREBA (ANTI-OVERFITTING) ---
+    # Para de treinar se o erro no "futuro invisível" parar de cair.
+    early_stop = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+    
+    # Salva apenas a versão que melhor previu o futuro invisível.
+    checkpoint = ModelCheckpoint('modelos/ibov_swing_modelo.h5', monitor='val_loss', save_best_only=True)
 
-    # 4. Salvar
-    os.makedirs('modelos', exist_ok=True)
-    model.save('modelos/ibov_swing_modelo.h5')
-    print("✅ MODELO IBOV SALVO: modelos/ibov_swing_modelo.h5")
+    print(f"🚀 Iniciando treinamento com {X.shape[0]} amostras...")
+    # Usamos 20% dos dados APENAS para validação (a rede nunca treina neles)
+    model.fit(X, y, 
+              epochs=20, 
+              batch_size=64, 
+              validation_split=0.2, 
+              callbacks=[early_stop, checkpoint],
+              verbose=1)
+
+    print("✅ CÉREBRO IBOV ATUALIZADO E PROTEGIDO: modelos/ibov_swing_modelo.h5")
 
 if __name__ == "__main__":
     treinar_ibov_swing()
